@@ -1,30 +1,30 @@
 'use strict';
 
 const railPredictionURL = 'https://api.wmata.com/StationPrediction.svc/json/GetPrediction/';
-const railLinesURL = 'https://api.wmata.com/Rail.svc/json/jLines';
+const railLineURL = 'https://api.wmata.com/Rail.svc/json/jLines';
 const railStationURL = 'https://api.wmata.com/Rail.svc/json/jStations'
 const busStopURL = 'https://api.wmata.com/Bus.svc/json/jStops';
-const busRoutesURL = 'https://api.wmata.com/Bus.svc/json/jRoutes';
+const busRouteURL = 'https://api.wmata.com/Bus.svc/json/jRoutes';
 const busPredictionURL = 'https://api.wmata.com/NextBusService.svc/json/jPredictions';
 const apiKey = '8232a7f9731949c282083d6fc7f3aa51';
 
-var railPredictionData = []; //may not be needed
-var railLinesData = [];
+var railLineData = [];
 var railStationData = [];
 var busStopData = [];
-var busRoutesData = [];
+var busRouteData = [];
 
 var selectedRailLineValue = '';
 var selectedRailStationValue = '';
-var predictionString = '';
-
-
+var railPredictionString = '';
+var selectedBusRouteValue = '';
+var selectedBusStopValue = '';
+var busPredictionString = '';
 
 
 function getBusRouteData(callback) {
     console.log(`getBusRouteData ran`);
     const query = {
-        url: `${busRoutesURL}?api_key=${apiKey}`,
+        url: `${busRouteURL}?api_key=${apiKey}`,
         type: 'GET',
         success: callback,
         error: function(error) { console.log(error); }
@@ -32,16 +32,24 @@ function getBusRouteData(callback) {
     $.ajax(query);
 }
 
-function displayBusRouteData(data) {
+function saveBusRouteData(data) {
+    console.log(`saveBusRouteData ran`);
+    busRouteData = data;
+    displayBusRouteData();
+}
+
+function displayBusRouteData() {
     console.log(`displayBusRouteData ran`);
-    console.log(data);
-    $('#js-main').append(`
-    <select id="js-busRoute-dropDown">
-    </select>
-  `);
     let select = document.getElementById('js-busRoute-dropDown');
-    for (let i = 0; i < data.Routes.length; i++) {
-        select.add(new Option(data.Routes[i]['Name']));
+    let opt = document.createElement("option");
+    opt.value = 'blank';
+    opt.text = '<Select Route>';
+    select.add(opt, null);
+    for (let i = 0; i < busRouteData.Routes.length; i++) {
+        let opt = document.createElement("option");
+        opt.value = busRouteData.Routes[i]['RouteID'];
+        opt.text = busRouteData.Routes[i]['Name'];
+        select.add(opt, null);
     }
 }
 
@@ -61,28 +69,101 @@ function getBusStopData(callback) {
     $.ajax(query);
 }
 
+function saveBusStopData(data) {
+    console.log(`saveBusStopData ran`);
+    busStopData = data;
+}
+
 function displayBusStopData(data) {
     console.log(`displayBusStopData ran`);
-    console.log(data);
-    $('#js-main').append(`
-    <select id="js-busStop-dropDown">
-    </select>
-  `);
+    $('#js-busStop-dropDown').empty();
     let select = document.getElementById('js-busStop-dropDown');
-    console.log('stops length');
-    for (let i = 0; i < data.Stops.length; i++) {
-        select.add(new Option(data.Stops[i]['Name']));
+    let opt = document.createElement("option");
+    opt.value = 'blank';
+    opt.text = 'blank';
+    opt.text = '<Select Stop>';
+    select.add(opt, null);
+    for (let i = 0; i < busStopData.Stops.length; i++) {
+        for (let j = 0; j < busStopData.Stops[i].Routes.length; j++) {
+            if (busStopData.Stops[i].Routes[j] == selectedBusRouteValue) {
+                let opt = document.createElement("option");
+                opt.value = busStopData.Stops[i].Routes[j];
+                opt.text = busStopData.Stops[i]['Name'];
+                opt.id = busStopData.Stops[i]['StopID'];
+                select.add(opt, null);
+            }
+        }
     }
+}
+
+
+function getBusPredictionData(stopID, callback) {
+    console.log(`getBusPredictionData ran`);
+    const query = {
+        url: `${busPredictionURL}?api_key=${apiKey}&StopID=${stopID}`,
+        type: 'GET',
+        success: callback,
+        error: function(error) {
+            console.log(error);
+            $('#js-busPredictionTable').empty();
+            $('#js-busPredictionTable').append(`
+      <tr>
+        <th>Route</th>
+        <th>Bus ID</th>
+        <th>Destination</th> 
+        <th>Minutes</th>
+      </tr>
+      <tr>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>No Bus Scheduled</td> 
+        <td>N/A</td>
+      </tr>
+      `);
+        }
+    };
+    $.ajax(query);
+}
+
+function displayBusPredictions(data) {
+    console.log(`displayBusPredictions ran`);
+    $('#js-busPredictionTable').empty();
+    busPredictionString = '';
+    for (let i = 0; i < data.Predictions.length; i++) {
+        if (data.Predictions[i]['RouteID'] == selectedBusRouteValue) {
+            busPredictionString = busPredictionString + `
+      <tr>
+        <td>${data.Predictions[i]['RouteID']}</td>
+        <td>${data.Predictions[i]['VehicleID']}</td>
+        <td>${data.Predictions[i]['DirectionText']}</td> 
+        <td>${data.Predictions[i]['Minutes']}</td>
+      </tr>`
+        }
+    }
+    $('#js-busPredictionTable').append(`
+    <tr>
+      <th>Route</th>
+      <th>Bus ID</th>
+      <th>Destination</th> 
+      <th>Minutes</th>
+    </tr>
+    ${busPredictionString}
+  `);
 }
 
 
 
 
 
-function getRailLinesData(callback) {
-    console.log(`getRailLinesData ran`);
+
+
+
+
+
+function getRailLineData(callback) {
+    console.log(`getRailLineData ran`);
     const query = {
-        url: `${railLinesURL}?api_key=${apiKey}`,
+        url: `${railLineURL}?api_key=${apiKey}`,
         type: 'GET',
         success: callback,
         error: function(error) { console.log(error); }
@@ -90,23 +171,23 @@ function getRailLinesData(callback) {
     $.ajax(query);
 }
 
-function saveRailLinesData(data) {
-    console.log(`saveRailLinesData ran`);
-    railLinesData = data;
-    displayRailLinesData();
+function saveRailLineData(data) {
+    console.log(`saveRailLineData ran`);
+    railLineData = data;
+    displayRailLineData();
 }
 
-function displayRailLinesData() {
-    console.log(`displayRailLinesData ran`);
-    let select = document.getElementById('js-railLines-dropDown');
+function displayRailLineData() {
+    console.log(`displayRailLineData ran`);
+    let select = document.getElementById('js-railLine-dropDown');
     let opt = document.createElement("option");
     opt.value = 'blank';
     opt.text = '<Select Line>';
     select.add(opt, null);
-    for (let i = 0; i < railLinesData.Lines.length; i++) {
+    for (let i = 0; i < railLineData.Lines.length; i++) {
         let opt = document.createElement("option");
-        opt.value = railLinesData.Lines[i]['LineCode'];
-        opt.text = railLinesData.Lines[i]['DisplayName'];
+        opt.value = railLineData.Lines[i]['LineCode'];
+        opt.text = railLineData.Lines[i]['DisplayName'];
         select.add(opt, null);
     }
 }
@@ -129,7 +210,6 @@ function getRailStationData(callback) {
 function saveRailStationData(data) {
     console.log(`saveRailStationData ran`);
     railStationData = data;
-    //displayRailStationData();
 }
 
 function displayRailStationData() {
@@ -162,17 +242,34 @@ function getRailPredictionData(stationCode, callback) {
         url: `${railPredictionURL}/${stationCode}?api_key=${apiKey}`,
         type: 'GET',
         success: callback,
-        error: function(error) { console.log(error); }
+        error: function(error) {
+            console.log(error);
+            $('#js-railPredictionTable').empty();
+            $('#js-railPredictionTable').append(`
+        <tr>
+          <th>Line</th>
+          <th>Cars</th>
+          <th>Destination</th>
+          <th>Minutes</th>
+        </tr>
+        <tr>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>No Train Scheduled</td> 
+          <td>N/A</td>
+        </tr>
+      `);
+        }
     };
     $.ajax(query);
 }
 
 function displayRailPredictions(data) {
-    $('#js-predictionTable').empty();
-    predictionString = '';
+    $('#js-railPredictionTable').empty();
+    railPredictionString = '';
     for (let i = 0; i < data.Trains.length; i++) {
         if (data.Trains[i]['Line'] == selectedRailLineValue) {
-            predictionString = predictionString + `
+            railPredictionString = railPredictionString + `
       <tr>
         <td>${data.Trains[i]['Line']}</td>
         <td>${data.Trains[i]['Car']}</td>
@@ -182,14 +279,14 @@ function displayRailPredictions(data) {
         }
     }
 
-    $('#js-predictionTable').append(`
+    $('#js-railPredictionTable').append(`
     <tr>
       <th>Line</th>
       <th>Cars</th>
       <th>Destination</th> 
       <th>Minutes</th>
     </tr>
-    ${predictionString}
+    ${railPredictionString}
 `);
 }
 
@@ -202,18 +299,18 @@ function handleRailButton() {
     $('#js-rail-button').click(function() {
         $('#js-main').html(`rail information
     <button type="button" id="js-home-button">Home</button>
-    <select id="js-railLines-dropDown"></select>
+    <select id="js-railLine-dropDown"></select>
     <select id="js-railStation-dropDown"></select>
-    <table id="js-predictionTable" style="width:100%"></table>
+    <table id="js-railPredictionTable" style="width:100%"></table>
     `);
         $('#js-railStation-dropDown').hide();
-        if (railLinesData.length == 0) {
-            getRailLinesData(saveRailLinesData);
+        if (railLineData.length == 0) {
+            getRailLineData(saveRailLineData);
             getRailStationData(saveRailStationData);
         } else {
             selectedRailLineValue = '';
-            displayRailLinesData();
-            displayRailStationData($("#js-railLines-dropDown option:selected").text());
+            displayRailLineData();
+            displayRailStationData();
         }
     });
 }
@@ -221,8 +318,21 @@ function handleRailButton() {
 function handleBusButton() {
     $('#js-bus-button').click(function() {
         $('#js-main').html(`bus information
-    <button type="button" id="js-home-button">Home</button>`);
-        getBusRouteData(displayBusRouteData);
+    <button type="button" id="js-home-button">Home</button>
+    <select id="js-busRoute-dropDown"></select>
+    <select id="js-busStop-dropDown"></select>
+    <table id="js-busPredictionTable" style="width:100%"></table>
+    `);
+        $('#js-busStop-dropDown').hide();
+        console.log(busStopData.length);
+        if (busStopData.length == 0) {
+            getBusRouteData(saveBusRouteData);
+            getBusStopData(saveBusStopData);
+        } else {
+            selectedBusRouteValue = '';
+            displayBusRouteData();
+            displayBusStopData();
+        }
     });
 }
 
@@ -233,9 +343,9 @@ function handleHomeButton() {
 }
 
 function handleRailLineChange() {
-    $('#js-main').on('change', '#js-railLines-dropDown', function() {
-        selectedRailLineValue = $("#js-railLines-dropDown option:selected").val();
-        $('#js-predictionTable').empty();
+    $('#js-main').on('change', '#js-railLine-dropDown', function() {
+        selectedRailLineValue = $("#js-railLine-dropDown option:selected").val();
+        $('#js-railPredictionTable').empty();
         displayRailStationData();
         $('#js-railStation-dropDown').show();
     });
@@ -248,12 +358,28 @@ function handleRailStationChange() {
     });
 }
 
+function handleBusRouteChange() {
+    $('#js-main').on('change', '#js-busRoute-dropDown', function() {
+        selectedBusRouteValue = $("#js-busRoute-dropDown option:selected").val();
+        $('#js-busPredictionTable').empty();
+        displayBusStopData();
+        $('#js-busStop-dropDown').show();
+    });
+}
+
+function handleBusStopChange() {
+    $('#js-main').on('change', '#js-busStop-dropDown', function() {
+        selectedBusStopValue = $("#js-busStop-dropDown option:selected").attr("id");
+        getBusPredictionData(selectedBusStopValue, displayBusPredictions);
+    });
+}
+
 function renderHomepage() {
-    $('#js-main').html(`<h1>Metro Arrivals</h1>
+    $('#js-main').html(`
+      <h1>Metro Arrivals</h1>
       <h2>Select below to show arrival times</h2>
       <button type="button" id="js-rail-button">Rail</button>
       <button type="button" id="js-bus-button">Bus</button>
-
   `);
 }
 
@@ -264,6 +390,8 @@ function handleArrival() {
     handleHomeButton();
     handleRailLineChange();
     handleRailStationChange();
+    handleBusRouteChange();
+    handleBusStopChange();
 }
 
 $(handleArrival);
