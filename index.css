@@ -39,7 +39,7 @@ option {
 
 button {
     background-color: #8e8e8e;
-    border: #8e8e8e;
+    border: none;
     color: white;
     font-weight: bold;
     font-size: 2em;

@@ -152,6 +152,16 @@ function displayBusPredictions(data) {
             predictionCount++;
         }
     }
+    if (predictionCount == 0) {
+        busPredictionString = busPredictionString + `
+      <tr>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>No Buses Scheduled</td> 
+        <td>N/A</td>
+      </tr>`;
+    }
+
     $('#js-busPredictionTable').append(`
     <tr>
       <th>Route</th>
@@ -302,6 +312,16 @@ function displayRailPredictions(data) {
       </tr>`;
             predictionCount++;
         }
+    }
+
+    if (predictionCount == 0) {
+        railPredictionString = railPredictionString + `
+      <tr>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>No Trains Scheduled</td> 
+        <td>N/A</td>
+      </tr>`;
     }
 
     $('#js-railPredictionTable').append(`
