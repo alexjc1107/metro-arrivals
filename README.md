@@ -18,6 +18,7 @@ Bus Arrivals:
 ![Bus_Arrivals](Screenshots/Bus_Arrivals.JPG)
 
 ## Technologies Used
+###
 *HTML
 *CSS
 *jQuery
