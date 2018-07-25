@@ -1,5 +1,5 @@
 # Metro Arrivals
-[Link to Metro Arrivals](https://alexjc1107.github.io/metro-capstone/)
+[Link to Metro Arrivals](https://alexjc1107.github.io/metro-arrivals/)
 
 ## Summary
 This app will help users to view real-time bus and train arrival times for Metro (Washington DC area). Users can quickly view arrival times by bus route/stop and train line/station.
