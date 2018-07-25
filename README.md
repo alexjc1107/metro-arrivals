@@ -19,8 +19,4 @@ Bus Arrivals:
 
 ## Technologies Used
 ###
-*HTML
-*CSS
-*jQuery
-*JavaScript
-*AJAX
+HTML, CSS, jQuery, JavaScript, AJAX
